@@ -87,10 +87,14 @@ document.addEventListener("DOMContentLoaded", function () {
     return d;
   }
 
+  // ✅ Ahora devuelve "hits" para luego listarlos en Resultados
   function sumarDiasHabilesJudiciales(fechaInicio, cantidad, festivos) {
     const logs = [];
+    const hits = []; // {fecha:"YYYY-MM-DD", resolucion:"..."}
+
     let actual = new Date(fechaInicio);
     actual.setDate(actual.getDate() + 1);
+
     let cont = 0;
     const diasSemana = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 
@@ -105,8 +109,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (isCierre) {
         estado = "❌ No cuenta";
-        const ref = RESOLUCION_POR_FECHA.get(key) || "Suspensión";
+        const ref = RESOLUCION_POR_FECHA.get(key) || "Suspensión (sin resolución registrada)";
         razon = `Suspensión - ${ref}`;
+        hits.push({ fecha: key, resolucion: ref });
       } else if (isWE) {
         estado = "❌ No cuenta";
         razon = "Fin de semana";
@@ -123,7 +128,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const fechaFinal = new Date(actual);
     fechaFinal.setDate(fechaFinal.getDate() - 1);
-    return { fechaFinal, logs };
+
+    return { fechaFinal, logs, hits };
   }
 
   function sumarMeses(fecha, meses) {
@@ -252,9 +258,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const yearEnd = notif.getFullYear() + 20;
     const festivos = holidaysCOForYears(yearStart, yearEnd);
 
+    // 👇 Acumulador de suspensiones usadas en TODO el cálculo
+    const suspUsadas = new Map(); // key YYYY-MM-DD -> resolución
+
     const diasEjecutoria = (tipo === "Estados") ? 3 : 0;
-    const { fechaFinal: fechaEjecutoria, logs: logEjec } =
-      sumarDiasHabilesJudiciales(notif, diasEjecutoria, festivos);
+    const rEjec = sumarDiasHabilesJudiciales(notif, diasEjecutoria, festivos);
+    const fechaEjecutoria = rEjec.fechaFinal;
+    const logEjec = rEjec.logs;
+    for (const h of rEjec.hits) suspUsadas.set(h.fecha, h.resolucion);
 
     // Obligación condicional
     let baseCumpl = fechaEjecutoria, logCond = [], descriptorCond = "";
@@ -272,6 +283,7 @@ document.addEventListener("DOMContentLoaded", function () {
         baseCumpl = r.fechaFinal;
         logCond = r.logs;
         descriptorCond = `${n} día(s) hábil(es)`;
+        for (const h of r.hits) suspUsadas.set(h.fecha, h.resolucion);
       }
     } else if (modoCond === "fijo") {
       const tentativa = parseYMD(el("fecha_cond").value);
@@ -281,7 +293,6 @@ document.addEventListener("DOMContentLoaded", function () {
         `Fecha fija condicional: ${fmt(tentativa)}`,
         (tentativa.getTime() !== ajustada.getTime() ? `Ajustada a hábil → ${fmt(ajustada)}` : "Cae en día hábil"),
       ];
-      descriptorCond = `Fecha fija (${fmt(tentativa)})`;
     }
 
     // Cumplimiento
@@ -298,6 +309,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const r = sumarDiasHabilesJudiciales(baseCumpl, n, festivos);
       fechaCumpl = r.fechaFinal;
       logCumpl = r.logs;
+      for (const h of r.hits) suspUsadas.set(h.fecha, h.resolucion);
     } else if (modo === "meses") {
       const n = Number(el("meses_cumpl").value || 0);
       const raw = sumarMeses(baseCumpl, n);
@@ -320,11 +332,12 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    // Límite de informe (también capta suspensiones del conteo)
     const diasInf = Number(el("dias_informe").value || 0);
-    const fechaLimite = siguienteHabil(
-      sumarDiasHabilesJudiciales(fechaCumpl, diasInf, festivos).fechaFinal,
-      festivos
-    );
+    const rLim = sumarDiasHabilesJudiciales(fechaCumpl, diasInf, festivos);
+    for (const h of rLim.hits) suspUsadas.set(h.fecha, h.resolucion);
+
+    const fechaLimite = siguienteHabil(rLim.fechaFinal, festivos);
     const logsLimite = [`Base: ${fmt(fechaCumpl)} + ${diasInf} día(s) hábil(es) = ${fmt(fechaLimite)}`];
 
     // Aviso vs hoy
@@ -367,7 +380,9 @@ document.addEventListener("DOMContentLoaded", function () {
       else estado = "✅ Informe oportuno";
     }
 
-    // Salida
+    // =========================
+    // Salida (Resultados) + Suspensiones
+    // =========================
     const res = [];
     res.push(`Fecha de Notificación: ${fmt(notif)} (${tipo})`);
     res.push(`Fecha de Ejecutoria: ${fmt(fechaEjecutoria)}`);
@@ -376,6 +391,21 @@ document.addEventListener("DOMContentLoaded", function () {
     res.push(`Lte. Informe incumplimiento: ${fmt(fechaLimite)}`);
     res.push(sinNoticia ? "Noticia: (sin noticia)" : `Noticia: ${fmt(parseYMD(informeStr))}${textoEntendido}`);
     res.push(`📣 Estado noticia: ${estado}`);
+
+    // 👇 Bloque adicional en Resultados: suspensiones consideradas
+    if (suspUsadas.size > 0) {
+      res.push("");
+      res.push("🧾 Suspensiones tenidas en cuenta (fecha → soporte):");
+      const items = [...suspUsadas.entries()].sort(([a], [b]) => a.localeCompare(b));
+      for (const [fechaKey, ref] of items) {
+        // si prefieres mostrar dd-mm-yyyy: conviértelo aquí
+        const d = parseYMD(fechaKey);
+        res.push(`- ${fmt(d)} → ${ref}`);
+      }
+    } else {
+      res.push("");
+      res.push("🧾 Suspensiones tenidas en cuenta: (ninguna en este cálculo)");
+    }
 
     el("res_text").textContent = res.join("\n");
     el("resultado").style.display = "block";
@@ -386,6 +416,7 @@ document.addEventListener("DOMContentLoaded", function () {
     else if (estado.includes("Pretémpore") || estado.includes("Extemporáneo")) contResultado.classList.add("resultado-bad");
     else contResultado.classList.add("resultado-neutral");
 
+    // Detalle (sigue funcionando igual)
     if (mostrarDetalle) {
       el("det_ejecutoria").textContent = ["Detalle: Ejecutoria", ...logEjec].join("\n");
       el("det_cond").textContent = logCond.length ? ["Detalle: Obligación condicional", ...logCond].join("\n") : "";
