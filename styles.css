@@ -12,11 +12,15 @@ body {
   font-family: system-ui, sans-serif;
   background: var(--bg);
   color: var(--fg);
-  margin: 32px auto;
-  max-width: 600px;
+
+  /* ✅ más ancho y centrado */
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 20px 70px;
+
   line-height: 1.6;
-  padding: 0 16px 60px;
 }
+
 
 h1 {
   font-size: 1.5rem;
@@ -145,10 +149,13 @@ pre {
 }
 
 .calculadoras {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 1.5em;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  align-items: start;
 }
 
-.calculadoras fieldset { flex: 1 1 280px; }
+.calculadoras fieldset {
+  margin-bottom: 0; /* para que el gap mande */
+}
+
