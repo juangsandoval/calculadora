@@ -1,0 +1,164 @@
+:root {
+  --accent: #00695c;
+  --bg: #fafbfc;
+  --fg: #222;
+  --border: #e0e0e0;
+  --radius: 8px;
+}
+
+html, body {
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  margin: 32px auto;
+  max-width: 600px;
+  line-height: 1.6;
+  padding: 0 16px 60px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  color: var(--accent);
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+fieldset {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 1.5em;
+  margin-bottom: 1.5em;
+}
+
+legend {
+  font-weight: 600;
+  color: var(--accent);
+  padding: 0 0.5em;
+}
+
+label {
+  font-size: 1em;
+  font-weight: 500;
+  margin-bottom: 0.25em;
+  display: block;
+}
+
+input, select {
+  width: 100%;
+  padding: 0.6em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fafbfc;
+  font-size: 1em;
+  margin-bottom: 1em;
+  box-sizing: border-box;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5em;
+}
+
+button {
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.7em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  margin-bottom: 0.5em;
+}
+
+button.info { background: #0288d1; }
+button.warn { background: #fbc02d; color: #222; }
+button:active { opacity: 0.9; }
+
+.note {
+  background: #e0f2f1;
+  border-left: 3px solid var(--accent);
+  padding: 1em;
+  border-radius: var(--radius);
+  margin-bottom: 1em;
+}
+
+pre {
+  background: #f5f5f5;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1em;
+  font-family: ui-monospace, monospace;
+  font-size: 0.98em;
+  overflow-x: auto;
+}
+
+.row {
+  display: flex;
+  gap: 1em;
+  margin-bottom: 1em;
+  flex-wrap: wrap;
+}
+
+.row > div {
+  flex: 1 1 180px;
+  min-width: 140px;
+}
+
+.actions {
+  margin-top: 1em;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5em;
+}
+
+.actions button {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+}
+
+.muted {
+  color: #888;
+  font-size: 0.98em;
+  margin-bottom: 1.5em;
+}
+
+.small {
+  font-size: 0.92em;
+  color: #666;
+}
+
+.danger {
+  color: #c62828;
+}
+
+/* --- Colores reactivos para el resultado --- */
+.resultado-ok { border: 3px solid #2e7d32; }
+.resultado-bad { border: 3px solid #c62828; }
+.resultado-neutral { border: 3px solid transparent; }
+
+/* Tarjeta para el resultado */
+#resultado {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1em;
+  margin-bottom: 1em;
+  border: 3px solid transparent; /* base */
+}
+
+.calculadoras {
+  display: flex;
+  gap: 1.5em;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.calculadoras fieldset {
+  flex: 1 1 280px;
+}
