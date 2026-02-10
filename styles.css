@@ -1,3 +1,5 @@
+body { background: #111 !important; color: #fff !important; }
+
 :root {
   --accent: #00695c;
   --bg: #fafbfc;
